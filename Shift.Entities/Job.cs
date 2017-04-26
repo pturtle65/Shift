@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using LiteDb;
 
 namespace Shift.Entities
 {
@@ -8,6 +9,7 @@ namespace Shift.Entities
     public partial class Job
     {
         [Key]
+        [BsonId]
         public string JobID { get; set; } //PrimaryKey
 
         public string AppID { get; set; }

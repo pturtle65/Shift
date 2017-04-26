@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Globalization;
 using System.Linq.Expressions;
 
 //using System.Data.SqlClient;
@@ -206,6 +204,7 @@ namespace Shift.DataLayer
             var count = 0;
             using (var connection = new SQLiteConnection(connectionString))
             {
+                connection.Open();
                 using (var trn = connection.BeginTransaction())
                 {
                     try

@@ -18,6 +18,7 @@ namespace Shift.UnitTest
             //Configure storage connection
             var config = new ClientConfig();
             config.DBConnectionString = "Data Source=localhost\\SQL2014;Initial Catalog=ShiftJobsDB;Integrated Security=SSPI;";
+            config.DBConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\projects\Github\Shift\Shift.UnitTest\testdatabase.mdf;Integrated Security=True;Connect Timeout=30";
             config.StorageMode = "mssql";
             jobClient = new JobClient(config);
         }

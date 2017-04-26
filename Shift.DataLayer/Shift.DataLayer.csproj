@@ -45,6 +45,10 @@
       <HintPath>..\packages\EntityFramework.6.0.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="LiteDB, Version=3.1.0.0, Culture=neutral, PublicKeyToken=4ee40123013c9f27, processorArchitecture=MSIL">
+      <HintPath>..\packages\LiteDB.3.1.0\lib\net35\LiteDB.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="MongoDB.Bson, Version=2.4.3.23, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MongoDB.Bson.2.4.3\lib\net45\MongoDB.Bson.dll</HintPath>
       <Private>True</Private>
@@ -114,6 +118,7 @@
     <Compile Include="Common\ExpressionUtil\TypeBinaryExpressionFingerprint.cs" />
     <Compile Include="Common\ExpressionUtil\UnaryExpressionFingerprint.cs" />
     <Compile Include="DALHelpers.cs" />
+    <Compile Include="JobDALLiteDB.cs" />
     <Compile Include="JobDALMongo.cs" />
     <Compile Include="JobDALRedis.cs" />
     <Compile Include="JobDALSql.cs" />
@@ -122,7 +127,9 @@
     <Compile Include="RedisHelpers.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
