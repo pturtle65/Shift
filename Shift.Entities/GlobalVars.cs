@@ -21,7 +21,8 @@ namespace Shift
 
     public static class SerializerSettings
     {
-        public static JsonSerializerSettings Settings = new JsonSerializerSettings() {
+        public static JsonSerializerSettings Settings = new JsonSerializerSettings()
+        {
             TypeNameHandling = TypeNameHandling.Objects,
             TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple,
         };

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shift.Entities;
+using Shift.DataLayer;
 
 namespace Shift.UnitTest
 {
@@ -16,7 +17,14 @@ namespace Shift.UnitTest
         {
             //Configure storage connection
             var config = new ClientConfig();
-            config.DBConnectionString = @"Data Source=C:\projects\Github\Shift\Shift.UnitTest\testdatabase.db";
+
+            //config.DBConnectionString = @"Data Source=C:\projects\Github\Shift\Shift.UnitTest\testdatabase.db";
+            //config.DBConnectionString = "Data Source=localhost\\SQL2014;Initial Catalog=ShiftJobsDB;Integrated Security=SSPI;";
+            string cs = SQLiteDBHelpers.GetLocalDB("testdatabase");
+
+            config.DBConnectionString = cs;
+
+
             config.StorageMode = "sqlite";
             jobClient = new JobClient(config);
         }

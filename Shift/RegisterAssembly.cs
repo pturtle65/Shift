@@ -34,9 +34,9 @@ namespace Shift
                 case StorageMode.SQLite:
                     builder.RegisterType<JobDALSQLite>().As<IJobDAL>().UsingConstructor(typeof(string), typeof(string)).WithParameters(parameters);
                     break;
-                case StorageMode.LiteDB:
-                    builder.RegisterType<JobDALLiteDB>().As<IJobDAL>().UsingConstructor(typeof(string), typeof(string)).WithParameters(parameters);
-                    break;
+                //case StorageMode.LiteDB:
+                //    builder.RegisterType<JobDALLiteDB>().As<IJobDAL>().UsingConstructor(typeof(string), typeof(string)).WithParameters(parameters);
+                //    break;
                 default:
                     throw new ArgumentNullException("The storage mode configuration must not be empty or null.");
                     break;

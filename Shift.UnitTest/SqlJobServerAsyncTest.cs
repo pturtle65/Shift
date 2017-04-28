@@ -8,6 +8,7 @@ using Autofac.Features.ResolveAnything;
 
 using Shift.Entities;
 using System.Threading.Tasks;
+using Shift.DataLayer;
 
 namespace Shift.UnitTest
 {
@@ -22,14 +23,18 @@ namespace Shift.UnitTest
         {
             //Configure storage connection
             var clientConfig = new ClientConfig();
-            clientConfig.DBConnectionString = "Data Source=localhost\\SQL2014;Initial Catalog=ShiftJobsDB;Integrated Security=SSPI;";
-            clientConfig.DBConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\projects\Github\Shift\Shift.UnitTest\testdatabase.mdf;Integrated Security=True;Connect Timeout=30";
+
+            //clientConfig.DBConnectionString = "Data Source=localhost\\SQL2014;Initial Catalog=ShiftJobsDB;Integrated Security=SSPI;";
+            string cs = SqlDBHelpers.GetLocalDB("testdatabase");
+            clientConfig.DBConnectionString = cs;
+
             clientConfig.StorageMode = "mssql";
             jobClient = new JobClient(clientConfig);
 
             var serverConfig = new ServerConfig();
-            serverConfig.DBConnectionString = "Data Source=localhost\\SQL2014;Initial Catalog=ShiftJobsDB;Integrated Security=SSPI;";
-            serverConfig.DBConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\projects\Github\Shift\Shift.UnitTest\testdatabase.mdf;Integrated Security=True;Connect Timeout=30";
+            //serverConfig.DBConnectionString = "Data Source=localhost\\SQL2014;Initial Catalog=ShiftJobsDB;Integrated Security=SSPI;";
+            serverConfig.DBConnectionString = cs;
+
             serverConfig.StorageMode = "mssql";
             serverConfig.ProcessID = "JobServerAsyncTest";
             serverConfig.Workers = 1;
@@ -104,8 +109,8 @@ namespace Shift.UnitTest
         public async Task StopJobsRunningTest()
         {
             var jobTest = new TestJob();
-            var progress = new SynchronousProgress<ProgressInfo>(); 
-            var token = (new CancellationTokenSource()).Token; 
+            var progress = new SynchronousProgress<ProgressInfo>();
+            var token = (new CancellationTokenSource()).Token;
             var jobID = await jobClient.AddAsync(appID, () => jobTest.Start("Hello World", progress, token));
 
             //run job
@@ -132,8 +137,8 @@ namespace Shift.UnitTest
             //Test StopJobs with CleanUp() calls
 
             var jobTest = new TestJob();
-            var progress = new SynchronousProgress<ProgressInfo>(); 
-            var token = (new CancellationTokenSource()).Token; 
+            var progress = new SynchronousProgress<ProgressInfo>();
+            var token = (new CancellationTokenSource()).Token;
             var jobID = await jobClient.AddAsync(appID, () => jobTest.Start("Hello World", progress, token));
 
             //run job
@@ -145,7 +150,7 @@ namespace Shift.UnitTest
             Assert.AreEqual(JobStatus.Running, job.Status);
 
             await jobClient.SetCommandStopAsync(new List<string> { jobID });
-            await jobServer.CleanUpAsync(); 
+            await jobServer.CleanUpAsync();
             Thread.Sleep(3000);
 
             job = await jobClient.GetJobAsync(jobID);

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using LiteDb;
+using LiteDB;
 
 namespace Shift.Entities
 {
@@ -13,12 +13,12 @@ namespace Shift.Entities
         public string JobID { get; set; } //PrimaryKey
 
         public string AppID { get; set; }
-        public string UserID { get; set; } 
+        public string UserID { get; set; }
         public string ProcessID { get; set; }
         public string JobType { get; set; }
         public string JobName { get; set; }
         public string InvokeMeta { get; set; }
-        public string Parameters { get; set; } 
+        public string Parameters { get; set; }
         public string Command { get; set; }
         public JobStatus? Status { get; set; }
         public string Error { get; set; }

@@ -26,7 +26,7 @@ namespace Shift.DataLayer
 
         //private MongoClient client;
         private LiteDatabase database;
-       
+        
 
         #region Constructor
         public JobDALLiteDB(string connectionString, string encryptionKey)
@@ -47,36 +47,47 @@ namespace Shift.DataLayer
 
         protected void InitLiteDB()
         {
-            if (!BsonClassMap.IsClassMapRegistered(typeof(Job)))
+            database = new LiteDatabase(connectionString);
+
+            var jobs = database.GetCollection<Job>("Jobs");
+            
+            if (jobs.Count() == 0)
             {
-                BsonClassMap.RegisterClassMap<Job>(j =>
-                {
-                    j.AutoMap();
-                    j.SetIgnoreExtraElements(true);
-                    j.MapIdMember(p => p.JobID)
-                    .SetIdGenerator(StringObjectIdGenerator.Instance)
-                    .SetSerializer(new StringSerializer(BsonType.ObjectId));
-                });
-
-                BsonClassMap.RegisterClassMap<JobView>(j =>
-                {
-                    j.AutoMap();
-                    j.SetIgnoreExtraElements(true);
-                    j.MapIdMember(p => p.JobID)
-                    .SetIdGenerator(StringObjectIdGenerator.Instance)
-                    .SetSerializer(new StringSerializer(BsonType.ObjectId));
-                });
+                var doc = new BsonDocument();
+                doc["_id"] = ObjectId.NewObjectId();
+                //doc["AppID"] = 
             }
+                
+            //if (!BsonClassMap.IsClassMapRegistered(typeof(Job)))
+            //{
+            //    BsonClassMap.RegisterClassMap<Job>(j =>
+            //    {
+            //        j.AutoMap();
+            //        j.SetIgnoreExtraElements(true);
+            //        j.MapIdMember(p => p.JobID)
+            //        .SetIdGenerator(StringObjectIdGenerator.Instance)
+            //        .SetSerializer(new StringSerializer(BsonType.ObjectId));
+            //    });
 
-            var settings = MongoClientSettings.FromUrl(MongoUrl.Create(connectionString));
-            client = new MongoClient(settings);
+            //    BsonClassMap.RegisterClassMap<JobView>(j =>
+            //    {
+            //        j.AutoMap();
+            //        j.SetIgnoreExtraElements(true);
+            //        j.MapIdMember(p => p.JobID)
+            //        .SetIdGenerator(StringObjectIdGenerator.Instance)
+            //        .SetSerializer(new StringSerializer(BsonType.ObjectId));
+            //    });
+            //}
 
-            database = client.GetDatabase("ShiftDB");
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            collection.Indexes.CreateOne(Builders<Job>.IndexKeys.Ascending(j => j.Score));
-            collection.Indexes.CreateOne(Builders<Job>.IndexKeys.Ascending(j => j.Created));
-            collection.Indexes.CreateOne(Builders<Job>.IndexKeys.Ascending(j => j.Status));
-            collection.Indexes.CreateOne(Builders<Job>.IndexKeys.Ascending(j => j.ProcessID));
+            //var settings = MongoClientSettings.FromUrl(MongoUrl.Create(connectionString));
+            //client = new MongoClient(settings);
+
+            //database = client.GetDatabase("ShiftDB");
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //collection.Indexes.CreateOne(Builders<Job>.IndexKeys.Ascending(j => j.Score));
+            //collection.Indexes.CreateOne(Builders<Job>.IndexKeys.Ascending(j => j.Created));
+            //collection.Indexes.CreateOne(Builders<Job>.IndexKeys.Ascending(j => j.Status));
+            //collection.Indexes.CreateOne(Builders<Job>.IndexKeys.Ascending(j => j.ProcessID));
         }
 
         #endregion
@@ -144,10 +155,10 @@ namespace Shift.DataLayer
             job.Score = (new DateTimeOffset(now)).ToUnixTimeSeconds();
 
             var collection = database.GetCollection<Job>(JobCollectionName);
-            if (isSync)
-                collection.InsertOne(job);
-            else
-                await collection.InsertOneAsync(job);
+            //if (isSync)
+            //    collection.InsertOne(job);
+            //else
+            //    await collection.InsertOneAsync(job);
 
             return job.JobID;
         }
@@ -215,12 +226,12 @@ namespace Shift.DataLayer
             job.Score = (new DateTimeOffset(now)).ToUnixTimeSeconds();
 
             var count = 0;
-            var filter = Builders<Job>.Filter.Eq(j => j.JobID, jobID);
-            var collection = database.GetCollection<Job>(JobCollectionName);
+            //var filter = Builders<Job>.Filter.Eq(j => j.JobID, jobID);
+            //var collection = database.GetCollection<Job>(JobCollectionName);
 
-            var result = isSync ? collection.ReplaceOne(filter, job) : await collection.ReplaceOneAsync(filter, job);
-            if (result.IsAcknowledged)
-                count = (int)result.ModifiedCount;
+            //var result = isSync ? collection.ReplaceOne(filter, job) : await collection.ReplaceOneAsync(filter, job);
+            //if (result.IsAcknowledged)
+            //    count = (int)result.ModifiedCount;
 
             return count;
         }
@@ -250,14 +261,14 @@ namespace Shift.DataLayer
             if (jobIDs.Count == 0)
                 return count;
 
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            var blFilter = Builders<Job>.Filter;
-            var filter = blFilter.In(j => j.JobID, jobIDs) & (blFilter.Eq(j => j.Status, null) | blFilter.Eq(j => j.Status, JobStatus.Running));
-            var update = Builders<Job>.Update.Set("Command", JobCommand.Stop);
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //var blFilter = Builders<Job>.Filter;
+            //var filter = blFilter.In(j => j.JobID, jobIDs) & (blFilter.Eq(j => j.Status, null) | blFilter.Eq(j => j.Status, JobStatus.Running));
+            //var update = Builders<Job>.Update.Set("Command", JobCommand.Stop);
 
-            var result = isSync ? collection.UpdateMany(filter, update) : await collection.UpdateManyAsync(filter, update);
-            if (result.IsAcknowledged)
-                count = (int)result.ModifiedCount;
+            //var result = isSync ? collection.UpdateMany(filter, update) : await collection.UpdateManyAsync(filter, update);
+            //if (result.IsAcknowledged)
+            //    count = (int)result.ModifiedCount;
 
             return count;
         }
@@ -284,18 +295,18 @@ namespace Shift.DataLayer
             if (jobIDs.Count == 0)
                 return count;
 
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            var blFilter = Builders<Job>.Filter;
-            var filter = blFilter.In(j => j.JobID, jobIDs) & blFilter.Eq(j => j.Status, null) & blFilter.Eq(j => j.ProcessID, null);
-            var blUpdate = Builders<Job>.Update;
-            var listUpdate = new List<UpdateDefinition<Job>>();
-            listUpdate.Add(blUpdate.Set("Command", JobCommand.RunNow));
-            listUpdate.Add(blUpdate.Set<long>("Score", 0));
-            var update = blUpdate.Combine(listUpdate.ToArray());
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //var blFilter = Builders<Job>.Filter;
+            //var filter = blFilter.In(j => j.JobID, jobIDs) & blFilter.Eq(j => j.Status, null) & blFilter.Eq(j => j.ProcessID, null);
+            //var blUpdate = Builders<Job>.Update;
+            //var listUpdate = new List<UpdateDefinition<Job>>();
+            //listUpdate.Add(blUpdate.Set("Command", JobCommand.RunNow));
+            //listUpdate.Add(blUpdate.Set<long>("Score", 0));
+            //var update = blUpdate.Combine(listUpdate.ToArray());
 
-            var result = isSync ? collection.UpdateMany(filter, update) : await collection.UpdateManyAsync(filter, update);
-            if (result.IsAcknowledged)
-                count = (int)result.ModifiedCount;
+            //var result = isSync ? collection.UpdateMany(filter, update) : await collection.UpdateManyAsync(filter, update);
+            //if (result.IsAcknowledged)
+            //    count = (int)result.ModifiedCount;
 
             return count;
         }
@@ -321,34 +332,34 @@ namespace Shift.DataLayer
             if (jobIDs.Count == 0)
                 return count;
 
-            var collection = database.GetCollection<JobView>(JobCollectionName);
-            foreach (var jobID in jobIDs)
-            {
-                var job = collection.Find(j => j.JobID == jobID).FirstOrDefault();
-                if(job != null)
-                {
-                    var score = (new DateTimeOffset(job.Created.GetValueOrDefault())).ToUnixTimeSeconds();
-                    var blFilter = Builders<JobView>.Filter;
-                    var filter = blFilter.Eq(j => j.JobID, jobID) & (blFilter.Eq(j => j.Status, null) | !blFilter.Eq(j => j.Status, JobStatus.Running));
-                    var blUpdate = Builders<JobView>.Update;
-                    var listUpdate = new List<UpdateDefinition<JobView>>();
-                    listUpdate.Add(blUpdate.Set<string>("Data", null));
-                    listUpdate.Add(blUpdate.Set<int?>("Percent", null));
-                    listUpdate.Add(blUpdate.Set<string>("Note", null));
-                    listUpdate.Add(blUpdate.Set<string>("ProcessID", null));
-                    listUpdate.Add(blUpdate.Set<string>("Command", null));
-                    listUpdate.Add(blUpdate.Set<int?>("Status", null));
-                    listUpdate.Add(blUpdate.Set<string>("Error", null));
-                    listUpdate.Add(blUpdate.Set<DateTime?>("Start", null));
-                    listUpdate.Add(blUpdate.Set<DateTime?>("End", null));
-                    listUpdate.Add(blUpdate.Set<long>("Score", score));
-                    var update = blUpdate.Combine(listUpdate.ToArray());
+            //var collection = database.GetCollection<JobView>(JobCollectionName);
+            //foreach (var jobID in jobIDs)
+            //{
+            //    var job = collection.Find(j => j.JobID == jobID).FirstOrDefault();
+            //    if(job != null)
+            //    {
+            //        var score = (new DateTimeOffset(job.Created.GetValueOrDefault())).ToUnixTimeSeconds();
+            //        var blFilter = Builders<JobView>.Filter;
+            //        var filter = blFilter.Eq(j => j.JobID, jobID) & (blFilter.Eq(j => j.Status, null) | !blFilter.Eq(j => j.Status, JobStatus.Running));
+            //        var blUpdate = Builders<JobView>.Update;
+            //        var listUpdate = new List<UpdateDefinition<JobView>>();
+            //        listUpdate.Add(blUpdate.Set<string>("Data", null));
+            //        listUpdate.Add(blUpdate.Set<int?>("Percent", null));
+            //        listUpdate.Add(blUpdate.Set<string>("Note", null));
+            //        listUpdate.Add(blUpdate.Set<string>("ProcessID", null));
+            //        listUpdate.Add(blUpdate.Set<string>("Command", null));
+            //        listUpdate.Add(blUpdate.Set<int?>("Status", null));
+            //        listUpdate.Add(blUpdate.Set<string>("Error", null));
+            //        listUpdate.Add(blUpdate.Set<DateTime?>("Start", null));
+            //        listUpdate.Add(blUpdate.Set<DateTime?>("End", null));
+            //        listUpdate.Add(blUpdate.Set<long>("Score", score));
+            //        var update = blUpdate.Combine(listUpdate.ToArray());
 
-                    var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
-                    if (result.IsAcknowledged)
-                        count += (int)result.ModifiedCount;
-                }
-            }
+            //        var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
+            //        if (result.IsAcknowledged)
+            //            count += (int)result.ModifiedCount;
+            //    }
+            //}
 
             return count;
         }
@@ -373,13 +384,13 @@ namespace Shift.DataLayer
             if (jobIDs.Count == 0)
                 return count;
 
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            var blFilter = Builders<Job>.Filter;
-            var filter = blFilter.In(j => j.JobID, jobIDs) & (blFilter.Eq(j => j.Status, null) | !blFilter.Eq(j => j.Status, JobStatus.Running)); //Only NOT Running jobs
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //var blFilter = Builders<Job>.Filter;
+            //var filter = blFilter.In(j => j.JobID, jobIDs) & (blFilter.Eq(j => j.Status, null) | !blFilter.Eq(j => j.Status, JobStatus.Running)); //Only NOT Running jobs
 
-            var result = isSync ? collection.DeleteMany(filter) : await collection.DeleteManyAsync(filter);
-            if (result.IsAcknowledged)
-                count = (int)result.DeletedCount;
+            //var result = isSync ? collection.DeleteMany(filter) : await collection.DeleteManyAsync(filter);
+            //if (result.IsAcknowledged)
+            //    count = (int)result.DeletedCount;
 
             return count;
         }
@@ -402,49 +413,49 @@ namespace Shift.DataLayer
         private async Task<int> DeleteAsync(int hours, ICollection<JobStatus?> statusList, bool isSync)
         {
             var count = 0;
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            var blFilter = Builders<Job>.Filter;
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //var blFilter = Builders<Job>.Filter;
 
-            var pastDate = DateTime.Now.AddHours(-hours);
-            //WARNING: The nullable Created field filter must use j.Created != null or it will CRASH the ToList action
-            var dateFilter = (!blFilter.Eq(j => j.Created, null) & blFilter.Lt(j => j.Created, pastDate.ToUniversalTime())); //use UTC for datetime filtering!
+            //var pastDate = DateTime.Now.AddHours(-hours);
+            ////WARNING: The nullable Created field filter must use j.Created != null or it will CRASH the ToList action
+            //var dateFilter = (!blFilter.Eq(j => j.Created, null) & blFilter.Lt(j => j.Created, pastDate.ToUniversalTime())); //use UTC for datetime filtering!
 
-            //build where status
-            FilterDefinition<Job> statusFilter = null;
-            if (statusList != null)
-            {
-                var listFilter = new List<FilterDefinition<Job>>();
-                foreach (var status in statusList)
-                {
-                    if (status == null)
-                    {
-                        listFilter.Add(blFilter.Eq(j => j.Status, null));
-                    }
-                    else
-                    {
-                        listFilter.Add(blFilter.Eq(j => j.Status, status));
-                    }
-                }
+            ////build where status
+            //FilterDefinition<Job> statusFilter = null;
+            //if (statusList != null)
+            //{
+            //    var listFilter = new List<FilterDefinition<Job>>();
+            //    foreach (var status in statusList)
+            //    {
+            //        if (status == null)
+            //        {
+            //            listFilter.Add(blFilter.Eq(j => j.Status, null));
+            //        }
+            //        else
+            //        {
+            //            listFilter.Add(blFilter.Eq(j => j.Status, status));
+            //        }
+            //    }
 
-                if (listFilter.Count > 0)
-                {
-                    statusFilter = blFilter.Or(listFilter.ToArray());
-                }
-            }
+            //    if (listFilter.Count > 0)
+            //    {
+            //        statusFilter = blFilter.Or(listFilter.ToArray());
+            //    }
+            //}
 
-            FilterDefinition<Job> filter = null;
-            if (statusFilter != null)
-            {
-                filter = dateFilter & statusFilter;
-            }
-            else
-            {
-                filter = dateFilter;
-            }
+            //FilterDefinition<Job> filter = null;
+            //if (statusFilter != null)
+            //{
+            //    filter = dateFilter & statusFilter;
+            //}
+            //else
+            //{
+            //    filter = dateFilter;
+            //}
 
-            var result = isSync ? collection.DeleteMany(filter) : await collection.DeleteManyAsync(filter);
-            if (result.IsAcknowledged)
-                count = (int)result.DeletedCount;
+            //var result = isSync ? collection.DeleteMany(filter) : await collection.DeleteManyAsync(filter);
+            //if (result.IsAcknowledged)
+            //    count = (int)result.DeletedCount;
 
             return count;
         }
@@ -469,18 +480,18 @@ namespace Shift.DataLayer
             if (jobIDs.Count == 0)
                 return count;
 
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            var blFilter = Builders<Job>.Filter;
-            var filter = blFilter.In(j => j.JobID, jobIDs);
-            var blUpdate = Builders<Job>.Update;
-            var listUpdate = new List<UpdateDefinition<Job>>();
-            listUpdate.Add(blUpdate.Set<string>("Command", null));
-            listUpdate.Add(blUpdate.Set("Status", JobStatus.Stopped));
-            var update = blUpdate.Combine(listUpdate.ToArray());
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //var blFilter = Builders<Job>.Filter;
+            //var filter = blFilter.In(j => j.JobID, jobIDs);
+            //var blUpdate = Builders<Job>.Update;
+            //var listUpdate = new List<UpdateDefinition<Job>>();
+            //listUpdate.Add(blUpdate.Set<string>("Command", null));
+            //listUpdate.Add(blUpdate.Set("Status", JobStatus.Stopped));
+            //var update = blUpdate.Combine(listUpdate.ToArray());
 
-            var result = isSync ? collection.UpdateMany(filter, update): await collection.UpdateManyAsync(filter, update);
-            if (result.IsAcknowledged)
-                count = (int)result.ModifiedCount;
+            //var result = isSync ? collection.UpdateMany(filter, update): await collection.UpdateManyAsync(filter, update);
+            //if (result.IsAcknowledged)
+            //    count = (int)result.ModifiedCount;
 
             return count;
         }
@@ -506,46 +517,46 @@ namespace Shift.DataLayer
         {
             var groupStatus = new Dictionary<string, JobStatusCount>();
 
-            var collection = database.GetCollection<Job>(JobCollectionName);
+            //var collection = database.GetCollection<Job>(JobCollectionName);
 
-            var blFilter = Builders<Job>.Filter;
-            FilterDefinition<Job> filter = null;
-            if (!string.IsNullOrWhiteSpace(appID) && !string.IsNullOrWhiteSpace(userID))
-            {
-                filter = blFilter.Eq(j => j.AppID, appID) & blFilter.Eq(j => j.UserID, userID);
-            }
-            else if (!string.IsNullOrWhiteSpace(appID) && string.IsNullOrWhiteSpace(userID)) //appID not null, userID is null
-            {
-                filter = blFilter.Eq(j => j.AppID, appID);
-            }
-            else if (string.IsNullOrWhiteSpace(appID) && !string.IsNullOrWhiteSpace(userID)) //appID is null, userID not null
-            {
-                filter = blFilter.Eq(j => j.UserID, userID);
-            }
+            //var blFilter = Builders<Job>.Filter;
+            //FilterDefinition<Job> filter = null;
+            //if (!string.IsNullOrWhiteSpace(appID) && !string.IsNullOrWhiteSpace(userID))
+            //{
+            //    filter = blFilter.Eq(j => j.AppID, appID) & blFilter.Eq(j => j.UserID, userID);
+            //}
+            //else if (!string.IsNullOrWhiteSpace(appID) && string.IsNullOrWhiteSpace(userID)) //appID not null, userID is null
+            //{
+            //    filter = blFilter.Eq(j => j.AppID, appID);
+            //}
+            //else if (string.IsNullOrWhiteSpace(appID) && !string.IsNullOrWhiteSpace(userID)) //appID is null, userID not null
+            //{
+            //    filter = blFilter.Eq(j => j.UserID, userID);
+            //}
 
-            IAsyncCursor<Job> cursor = null;
-            if(filter == null)
-            {
-                cursor = await collection.FindAsync(p => true);
-            }
-            else
-            {
-                cursor = await collection.FindAsync(filter);
-            }
+            //IAsyncCursor<Job> cursor = null;
+            //if(filter == null)
+            //{
+            //    cursor = await collection.FindAsync(p => true);
+            //}
+            //else
+            //{
+            //    cursor = await collection.FindAsync(filter);
+            //}
 
-            using (cursor)
-            {
-                while (await cursor.MoveNextAsync())
-                {
-                    var batch = cursor.Current;
-                    foreach (var job in batch)
-                    {
-                        GroupStatusCount(groupStatus, job);
-                    }
+            //using (cursor)
+            //{
+            //    while (await cursor.MoveNextAsync())
+            //    {
+            //        var batch = cursor.Current;
+            //        foreach (var job in batch)
+            //        {
+            //            GroupStatusCount(groupStatus, job);
+            //        }
 
-                }
+            //    }
 
-            }
+            //}
 
             return groupStatus.Values.ToList();
         }
@@ -590,15 +601,17 @@ namespace Shift.DataLayer
 
         private async Task<Job> GetJobAsync(string jobID, bool isSync)
         {
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            if(isSync)
-            {
-                return collection.Find(j => j.JobID == jobID).FirstOrDefault();
-            } 
-            else
-            {
-                return await collection.Find(j => j.JobID == jobID).FirstOrDefaultAsync();
-            }
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //if(isSync)
+            //{
+            //    return collection.Find(j => j.JobID == jobID).FirstOrDefault();
+            //} 
+            //else
+            //{
+            //    return await collection.Find(j => j.JobID == jobID).FirstOrDefaultAsync();
+            //}
+
+            return null;
         }
 
         /// <summary>
@@ -618,15 +631,17 @@ namespace Shift.DataLayer
 
         private async Task<IReadOnlyCollection<Job>> GetJobsAsync(IEnumerable<string> jobIDs, bool isSync)
         {
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            if (isSync)
-            {
-                return collection.Find(j => jobIDs.Contains(j.JobID)).ToList();
-            }
-            else
-            {
-                return await collection.Find(j => jobIDs.Contains(j.JobID)).ToListAsync();
-            }
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //if (isSync)
+            //{
+            //    return collection.Find(j => jobIDs.Contains(j.JobID)).ToList();
+            //}
+            //else
+            //{
+            //    return await collection.Find(j => jobIDs.Contains(j.JobID)).ToListAsync();
+            //}
+            return null;
+
         }
 
         /// <summary>
@@ -646,15 +661,16 @@ namespace Shift.DataLayer
 
         private async Task<JobView> GetJobViewAsync(string jobID, bool isSync)
         {
-            var collection = database.GetCollection<JobView>(JobCollectionName);
-            if (isSync)
-            {
-                return collection.Find(j => j.JobID == jobID).FirstOrDefault();
-            }
-            else
-            {
-                return await collection.Find(j => j.JobID == jobID).FirstOrDefaultAsync(); 
-            }
+            //var collection = database.GetCollection<JobView>(JobCollectionName);
+            //if (isSync)
+            //{
+            //    return collection.Find(j => j.JobID == jobID).FirstOrDefault();
+            //}
+            //else
+            //{
+            //    return await collection.Find(j => j.JobID == jobID).FirstOrDefaultAsync(); 
+            //}
+            return null;
         }
 
         /// <summary>
@@ -674,15 +690,16 @@ namespace Shift.DataLayer
 
         private async Task<IReadOnlyCollection<Job>> GetNonRunningJobsByIDsAsync(IEnumerable<string> jobIDs, bool isSync)
         {
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            if (isSync)
-            {
-                return collection.Find(j => jobIDs.Contains(j.JobID) && j.Status == null).ToList();
-            }
-            else
-            {
-                return await collection.Find(j => jobIDs.Contains(j.JobID) && j.Status == null).ToListAsync();
-            }
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //if (isSync)
+            //{
+            //    return collection.Find(j => jobIDs.Contains(j.JobID) && j.Status == null).ToList();
+            //}
+            //else
+            //{
+            //    return await collection.Find(j => jobIDs.Contains(j.JobID) && j.Status == null).ToListAsync();
+            //}
+            return null;
         }
 
         /// <summary>
@@ -703,15 +720,16 @@ namespace Shift.DataLayer
 
         private async Task<IReadOnlyCollection<string>> GetJobIdsByProcessAndCommandAsync(string processID, string command, bool isSync)
         {
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            var projection = Builders<Job>.Projection.Include(j => j.JobID);
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //var projection = Builders<Job>.Projection.Include(j => j.JobID);
 
-            var query = collection.Find(j => (j.ProcessID == processID || j.ProcessID == null) && j.Command == command)
-                .Project<Job>(projection);
-            var queryResult = isSync ? query.ToList() : await query.ToListAsync();
+            //var query = collection.Find(j => (j.ProcessID == processID || j.ProcessID == null) && j.Command == command)
+            //    .Project<Job>(projection);
+            //var queryResult = isSync ? query.ToList() : await query.ToListAsync();
 
-            var result = queryResult.Select(p => p.JobID).ToList();
-            return result;
+            //var result = queryResult.Select(p => p.JobID).ToList();
+            //return result;
+            return null;
         }
 
         /// <summary>
@@ -732,15 +750,17 @@ namespace Shift.DataLayer
 
         private async Task<IReadOnlyCollection<Job>> GetJobsByProcessAndStatusAsync(string processID, JobStatus status, bool isSync)
         {
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            List<Job> jobList = new List<Job>();
-            if (isSync)
-                jobList = collection.Find(j => j.ProcessID == processID && j.Status == status).ToList();
-            else
-            {
-                jobList = await collection.Find(j => j.ProcessID == processID && j.Status == status).ToListAsync();
-            }
-            return jobList;
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //List<Job> jobList = new List<Job>();
+            //if (isSync)
+            //    jobList = collection.Find(j => j.ProcessID == processID && j.Status == status).ToList();
+            //else
+            //{
+            //    jobList = await collection.Find(j => j.ProcessID == processID && j.Status == status).ToListAsync();
+            //}
+            //return jobList;
+
+            return null;
 
         }
 
@@ -762,23 +782,24 @@ namespace Shift.DataLayer
 
         private async Task<JobViewList> GetJobViewsAsync(int? pageIndex, int? pageSize, bool isSync)
         {
-            var result = new List<JobView>();
+            //var result = new List<JobView>();
 
-            pageIndex = pageIndex == null || pageIndex == 0 ? 1 : pageIndex; //default to 1
-            pageSize = pageSize == null || pageSize == 0 ? 10 : pageSize; //default to 10
-            var offset = (pageIndex.Value - 1) * pageSize.Value;
+            //pageIndex = pageIndex == null || pageIndex == 0 ? 1 : pageIndex; //default to 1
+            //pageSize = pageSize == null || pageSize == 0 ? 10 : pageSize; //default to 10
+            //var offset = (pageIndex.Value - 1) * pageSize.Value;
 
-            var collection = database.GetCollection<JobView>(JobCollectionName);
-            var query = collection.Find(j => true).SortBy(j => j.Created).SortBy(j => j.JobID);
+            //var collection = database.GetCollection<JobView>(JobCollectionName);
+            //var query = collection.Find(j => true).SortBy(j => j.Created).SortBy(j => j.JobID);
 
-            var totalTask = isSync ? query.Count() : await query.CountAsync();
-            var itemsTask = isSync ? query.Skip(offset).Limit(pageSize).ToList() : await query.Skip(offset).Limit(pageSize).ToListAsync();
+            //var totalTask = isSync ? query.Count() : await query.CountAsync();
+            //var itemsTask = isSync ? query.Skip(offset).Limit(pageSize).ToList() : await query.Skip(offset).Limit(pageSize).ToListAsync();
 
-            var jobViewList = new JobViewList();
-            jobViewList.Total = totalTask;
-            jobViewList.Items = itemsTask;
+            //var jobViewList = new JobViewList();
+            //jobViewList.Total = totalTask;
+            //jobViewList.Items = itemsTask;
 
-            return jobViewList;
+            //return jobViewList;
+            return null;
         }
         #endregion
 
@@ -803,18 +824,18 @@ namespace Shift.DataLayer
         {
             var count = 0;
 
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            var blFilter = Builders<Job>.Filter;
-            var filter = blFilter.Eq(j => j.JobID, jobID) & blFilter.Eq(j => j.ProcessID, processID);
-            var blUpdate = Builders<Job>.Update;
-            var listUpdate = new List<UpdateDefinition<Job>>();
-            listUpdate.Add(blUpdate.Set("Status", JobStatus.Running));
-            listUpdate.Add(blUpdate.Set("Start", DateTime.Now));
-            var update = blUpdate.Combine(listUpdate.ToArray());
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //var blFilter = Builders<Job>.Filter;
+            //var filter = blFilter.Eq(j => j.JobID, jobID) & blFilter.Eq(j => j.ProcessID, processID);
+            //var blUpdate = Builders<Job>.Update;
+            //var listUpdate = new List<UpdateDefinition<Job>>();
+            //listUpdate.Add(blUpdate.Set("Status", JobStatus.Running));
+            //listUpdate.Add(blUpdate.Set("Start", DateTime.Now));
+            //var update = blUpdate.Combine(listUpdate.ToArray());
 
-            var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
-            if (result.IsAcknowledged)
-                count = (int)result.ModifiedCount;
+            //var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
+            //if (result.IsAcknowledged)
+            //    count = (int)result.ModifiedCount;
 
             return count;
         }
@@ -840,18 +861,18 @@ namespace Shift.DataLayer
         {
             var count = 0;
 
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            var blFilter = Builders<Job>.Filter;
-            var filter = blFilter.Eq(j => j.JobID, jobID) & blFilter.Eq(j => j.ProcessID, processID);
-            var blUpdate = Builders<Job>.Update;
-            var listUpdate = new List<UpdateDefinition<Job>>();
-            listUpdate.Add(blUpdate.Set("Status", JobStatus.Error));
-            listUpdate.Add(blUpdate.Set("Error", error));
-            var update = blUpdate.Combine(listUpdate.ToArray());
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //var blFilter = Builders<Job>.Filter;
+            //var filter = blFilter.Eq(j => j.JobID, jobID) & blFilter.Eq(j => j.ProcessID, processID);
+            //var blUpdate = Builders<Job>.Update;
+            //var listUpdate = new List<UpdateDefinition<Job>>();
+            //listUpdate.Add(blUpdate.Set("Status", JobStatus.Error));
+            //listUpdate.Add(blUpdate.Set("Error", error));
+            //var update = blUpdate.Combine(listUpdate.ToArray());
 
-            var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
-            if (result.IsAcknowledged)
-                count = (int)result.ModifiedCount;
+            //var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
+            //if (result.IsAcknowledged)
+            //    count = (int)result.ModifiedCount;
 
             return count;
         }
@@ -875,19 +896,19 @@ namespace Shift.DataLayer
         private async Task<int> SetCompletedAsync(string processID, string jobID, bool isSync)
         {
             var count = 0;
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            var blFilter = Builders<Job>.Filter;
-            var filter = blFilter.Eq(j => j.JobID, jobID) & blFilter.Eq(j => j.ProcessID, processID);
-            var blUpdate = Builders<Job>.Update;
-            var listUpdate = new List<UpdateDefinition<Job>>();
-            listUpdate.Add(blUpdate.Set("Command", ""));
-            listUpdate.Add(blUpdate.Set("Status", JobStatus.Completed));
-            listUpdate.Add(blUpdate.Set("End", DateTime.Now));
-            var update = blUpdate.Combine(listUpdate.ToArray());
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //var blFilter = Builders<Job>.Filter;
+            //var filter = blFilter.Eq(j => j.JobID, jobID) & blFilter.Eq(j => j.ProcessID, processID);
+            //var blUpdate = Builders<Job>.Update;
+            //var listUpdate = new List<UpdateDefinition<Job>>();
+            //listUpdate.Add(blUpdate.Set("Command", ""));
+            //listUpdate.Add(blUpdate.Set("Status", JobStatus.Completed));
+            //listUpdate.Add(blUpdate.Set("End", DateTime.Now));
+            //var update = blUpdate.Combine(listUpdate.ToArray());
 
-            var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
-            if (result.IsAcknowledged)
-                count = (int)result.ModifiedCount;
+            //var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
+            //if (result.IsAcknowledged)
+            //    count = (int)result.ModifiedCount;
 
             return count;
         }
@@ -911,10 +932,10 @@ namespace Shift.DataLayer
         {
             var runningCount = 0;
  
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            var builder = Builders<Job>.Filter;
-            var filter = builder.Eq(j => j.ProcessID, processID) & builder.Eq(j => j.Status, JobStatus.Running);
-            runningCount = isSync ? (int)collection.Count(filter) : (int)await collection.CountAsync(filter);
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //var builder = Builders<Job>.Filter;
+            //var filter = builder.Eq(j => j.ProcessID, processID) & builder.Eq(j => j.Status, JobStatus.Running);
+            //runningCount = isSync ? (int)collection.Count(filter) : (int)await collection.CountAsync(filter);
 
             return runningCount;
         }
@@ -959,38 +980,38 @@ namespace Shift.DataLayer
         {
             var claimedJobs = new List<Job>();
 
-            foreach(var job in jobList)
-            {
-                var count = 0;
-                try
-                {
-                    var collection = database.GetCollection<Job>(JobCollectionName);
-                    var blFilter = Builders<Job>.Filter;
-                    var filter = blFilter.Eq(j => j.JobID, job.JobID) & blFilter.Eq(j => j.Status, null) & blFilter.Eq(j=> j.ProcessID, null);
-                    var update = Builders<Job>.Update.Set("ProcessID", processID);
+            //foreach(var job in jobList)
+            //{
+            //    var count = 0;
+            //    try
+            //    {
+            //        var collection = database.GetCollection<Job>(JobCollectionName);
+            //        var blFilter = Builders<Job>.Filter;
+            //        var filter = blFilter.Eq(j => j.JobID, job.JobID) & blFilter.Eq(j => j.Status, null) & blFilter.Eq(j=> j.ProcessID, null);
+            //        var update = Builders<Job>.Update.Set("ProcessID", processID);
 
-                    var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
-                    if (result.IsAcknowledged)
-                    {
-                        count = (int)result.ModifiedCount;
-                    }
-                }
-                catch (Exception exc)
-                {
-                    //just mark error, don't stop
-                    var error = job.Error + " ClaimJobsToRun error: " + exc.ToString();
-                    SetError(processID, job.JobID, error); //set error in storage
-                    job.Status = JobStatus.Error;
-                    job.Error = error;
-                    continue;
-                }
+            //        var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
+            //        if (result.IsAcknowledged)
+            //        {
+            //            count = (int)result.ModifiedCount;
+            //        }
+            //    }
+            //    catch (Exception exc)
+            //    {
+            //        //just mark error, don't stop
+            //        var error = job.Error + " ClaimJobsToRun error: " + exc.ToString();
+            //        SetError(processID, job.JobID, error); //set error in storage
+            //        job.Status = JobStatus.Error;
+            //        job.Error = error;
+            //        continue;
+            //    }
 
-                if (count > 0) //successful update 
-                {
-                    job.ProcessID = processID; //set it similar to DB record!
-                    claimedJobs.Add(job);
-                }
-            }
+            //    if (count > 0) //successful update 
+            //    {
+            //        job.ProcessID = processID; //set it similar to DB record!
+            //        claimedJobs.Add(job);
+            //    }
+            //}
 
             return claimedJobs; //it's possible to return less than passed jobIDs, since multiple Shift server might run and already claimed the job(s)
         }
@@ -1015,13 +1036,13 @@ namespace Shift.DataLayer
         {
             var jobList = new List<Job>();
  
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            var query  = collection
-                .Find(j => j.Status == null && j.ProcessID == null && (j.Command == JobCommand.RunNow || j.Command == null))
-                .SortBy(j => j.Score)
-                .Limit(maxNum);
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //var query  = collection
+            //    .Find(j => j.Status == null && j.ProcessID == null && (j.Command == JobCommand.RunNow || j.Command == null))
+            //    .SortBy(j => j.Score)
+            //    .Limit(maxNum);
 
-            jobList = isSync ? query.ToList() : await query.ToListAsync();
+            //jobList = isSync ? query.ToList() : await query.ToListAsync();
 
             return jobList;
         }
@@ -1061,20 +1082,20 @@ namespace Shift.DataLayer
         private async Task<int> UpdateProgressAsync(string jobID, int? percent, string note, string data, bool isSync)
         {
             var count = 0;
-            var collection = database.GetCollection<Job>(JobCollectionName);
-            var blFilter = Builders<Job>.Filter;
-            var filter = blFilter.Eq(j => j.JobID, jobID);
-            var blUpdate = Builders<Job>.Update;
-            var listUpdate = new List<UpdateDefinition<Job>>();
-            listUpdate.Add(blUpdate.Set("Percent", percent));
-            listUpdate.Add(blUpdate.Set("Note", note));
-            listUpdate.Add(blUpdate.Set("Data", data));
-            var update = blUpdate.Combine(listUpdate.ToArray());
+            //var collection = database.GetCollection<Job>(JobCollectionName);
+            //var blFilter = Builders<Job>.Filter;
+            //var filter = blFilter.Eq(j => j.JobID, jobID);
+            //var blUpdate = Builders<Job>.Update;
+            //var listUpdate = new List<UpdateDefinition<Job>>();
+            //listUpdate.Add(blUpdate.Set("Percent", percent));
+            //listUpdate.Add(blUpdate.Set("Note", note));
+            //listUpdate.Add(blUpdate.Set("Data", data));
+            //var update = blUpdate.Combine(listUpdate.ToArray());
 
-            var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
+            //var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
 
-            if (result.IsAcknowledged)
-                count = (int)result.ModifiedCount;
+            //if (result.IsAcknowledged)
+            //    count = (int)result.ModifiedCount;
 
             return count;
         }

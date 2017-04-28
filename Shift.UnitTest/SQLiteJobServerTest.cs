@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading;
 
 using Shift.Entities;
+using Shift.DataLayer;
 
 namespace Shift.UnitTest
 {
@@ -18,13 +19,16 @@ namespace Shift.UnitTest
         {
             //Configure storage connection
             var clientConfig = new ClientConfig();
-            clientConfig.DBConnectionString = @"Data Source=C:\projects\Github\Shift\Shift.UnitTest\testdatabase.db";
+            //clientConfig.DBConnectionString = @"Data Source=C:\projects\Github\Shift\Shift.UnitTest\testdatabase.db";
+            string cs = SQLiteDBHelpers.GetLocalDB("testdatabase");
+            clientConfig.DBConnectionString = cs;
 
             clientConfig.StorageMode = "sqlite";
             jobClient = new JobClient(clientConfig);
 
             var serverConfig = new ServerConfig();
-            serverConfig.DBConnectionString = @"Data Source=C:\projects\Github\Shift\Shift.UnitTest\testdatabase.db";
+            //serverConfig.DBConnectionString = @"Data Source=C:\projects\Github\Shift\Shift.UnitTest\testdatabase.db";
+            serverConfig.DBConnectionString = cs;
             serverConfig.StorageMode = "sqlite";
             serverConfig.ProcessID = "JobServerTest";
             serverConfig.Workers = 1;

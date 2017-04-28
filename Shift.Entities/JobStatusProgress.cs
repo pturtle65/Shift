@@ -1,16 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using LiteDB;
 
 namespace Shift.Entities
 {
     public class JobStatusProgress
     {
         [Key]
+        [BsonId]
         public string JobID { get; set; } //PrimaryKey
 
         public int? Percent { get; set; }
@@ -27,7 +25,7 @@ namespace Shift.Entities
         [Editable(false)]
         public string StatusLabel { get { return Status.ToString(); } }
 
-        public JobStatusProgress ()
+        public JobStatusProgress()
         {
             this.ExistsInDB = true;
         }

@@ -322,7 +322,7 @@ namespace Shift.DataLayer
             foreach (var jobID in jobIDs)
             {
                 var job = collection.Find(j => j.JobID == jobID).FirstOrDefault();
-                if(job != null)
+                if (job != null)
                 {
                     var score = (new DateTimeOffset(job.Created.GetValueOrDefault())).ToUnixTimeSeconds();
                     var blFilter = Builders<JobView>.Filter;
@@ -475,7 +475,7 @@ namespace Shift.DataLayer
             listUpdate.Add(blUpdate.Set("Status", JobStatus.Stopped));
             var update = blUpdate.Combine(listUpdate.ToArray());
 
-            var result = isSync ? collection.UpdateMany(filter, update): await collection.UpdateManyAsync(filter, update);
+            var result = isSync ? collection.UpdateMany(filter, update) : await collection.UpdateManyAsync(filter, update);
             if (result.IsAcknowledged)
                 count = (int)result.ModifiedCount;
 
@@ -521,7 +521,7 @@ namespace Shift.DataLayer
             }
 
             IAsyncCursor<Job> cursor = null;
-            if(filter == null)
+            if (filter == null)
             {
                 cursor = await collection.FindAsync(p => true);
             }
@@ -588,10 +588,10 @@ namespace Shift.DataLayer
         private async Task<Job> GetJobAsync(string jobID, bool isSync)
         {
             var collection = database.GetCollection<Job>(JobCollectionName);
-            if(isSync)
+            if (isSync)
             {
                 return collection.Find(j => j.JobID == jobID).FirstOrDefault();
-            } 
+            }
             else
             {
                 return await collection.Find(j => j.JobID == jobID).FirstOrDefaultAsync();
@@ -650,7 +650,7 @@ namespace Shift.DataLayer
             }
             else
             {
-                return await collection.Find(j => j.JobID == jobID).FirstOrDefaultAsync(); 
+                return await collection.Find(j => j.JobID == jobID).FirstOrDefaultAsync();
             }
         }
 
@@ -907,7 +907,7 @@ namespace Shift.DataLayer
         private async Task<int> CountRunningJobsAsync(string processID, bool isSync)
         {
             var runningCount = 0;
- 
+
             var collection = database.GetCollection<Job>(JobCollectionName);
             var builder = Builders<Job>.Filter;
             var filter = builder.Eq(j => j.ProcessID, processID) & builder.Eq(j => j.Status, JobStatus.Running);
@@ -956,14 +956,14 @@ namespace Shift.DataLayer
         {
             var claimedJobs = new List<Job>();
 
-            foreach(var job in jobList)
+            foreach (var job in jobList)
             {
                 var count = 0;
                 try
                 {
                     var collection = database.GetCollection<Job>(JobCollectionName);
                     var blFilter = Builders<Job>.Filter;
-                    var filter = blFilter.Eq(j => j.JobID, job.JobID) & blFilter.Eq(j => j.Status, null) & blFilter.Eq(j=> j.ProcessID, null);
+                    var filter = blFilter.Eq(j => j.JobID, job.JobID) & blFilter.Eq(j => j.Status, null) & blFilter.Eq(j => j.ProcessID, null);
                     var update = Builders<Job>.Update.Set("ProcessID", processID);
 
                     var result = isSync ? collection.UpdateOne(filter, update) : await collection.UpdateOneAsync(filter, update);
@@ -1011,9 +1011,9 @@ namespace Shift.DataLayer
         private async Task<IReadOnlyCollection<Job>> GetJobsToRunAsync(int maxNum, bool isSync)
         {
             var jobList = new List<Job>();
- 
+
             var collection = database.GetCollection<Job>(JobCollectionName);
-            var query  = collection
+            var query = collection
                 .Find(j => j.Status == null && j.ProcessID == null && (j.Command == JobCommand.RunNow || j.Command == null))
                 .SortBy(j => j.Score)
                 .Limit(maxNum);
@@ -1096,7 +1096,7 @@ namespace Shift.DataLayer
             //No cache, so always get direct
             var jsProgress = new JobStatusProgress();
             //try to get from DB
-            var jobView = isSync ? GetJobView(jobID): await GetJobViewAsync(jobID);
+            var jobView = isSync ? GetJobView(jobID) : await GetJobViewAsync(jobID);
             if (jobView != null)
             {
                 jsProgress.JobID = jobView.JobID;
@@ -1123,7 +1123,7 @@ namespace Shift.DataLayer
 
         public Task<JobStatusProgress> GetCachedProgressAsync(string jobID)
         {
-            return GetProgressAsync(jobID); 
+            return GetProgressAsync(jobID);
         }
 
         //Set Cached progress similar to the DB SetProgress()

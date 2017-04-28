@@ -7,6 +7,7 @@ using Autofac;
 using Autofac.Features.ResolveAnything;
 
 using Shift.Entities;
+using Shift.DataLayer;
 
 namespace Shift.UnitTest
 {
@@ -21,15 +22,20 @@ namespace Shift.UnitTest
         {
             //Configure storage connection
             var clientConfig = new ClientConfig();
-            clientConfig.DBConnectionString = "Data Source=localhost\\SQL2014;Initial Catalog=ShiftJobsDB;Integrated Security=SSPI;";
-            clientConfig.DBConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\projects\Github\Shift\Shift.UnitTest\testdatabase.mdf;Integrated Security=True;Connect Timeout=30";
+
+            //clientConfig.DBConnectionString = "Data Source=localhost\\SQL2014;Initial Catalog=ShiftJobsDB;Integrated Security=SSPI;";
+            string cs = SqlDBHelpers.GetLocalDB("testdatabase");
+            clientConfig.DBConnectionString = cs;
 
             clientConfig.StorageMode = "mssql";
             jobClient = new JobClient(clientConfig);
 
             var serverConfig = new ServerConfig();
-            serverConfig.DBConnectionString = "Data Source=localhost\\SQL2014;Initial Catalog=ShiftJobsDB;Integrated Security=SSPI;";
-            serverConfig.DBConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\projects\Github\Shift\Shift.UnitTest\testdatabase.mdf;Integrated Security=True;Connect Timeout=30";
+
+            //serverConfig.DBConnectionString = "Data Source=localhost\\SQL2014;Initial Catalog=ShiftJobsDB;Integrated Security=SSPI;";
+            serverConfig.DBConnectionString = cs;
+
+            clientConfig.DBConnectionString = cs;
             serverConfig.StorageMode = "mssql";
             serverConfig.ProcessID = "JobServerTest";
             serverConfig.Workers = 1;
@@ -53,7 +59,7 @@ namespace Shift.UnitTest
 
             //run job
             jobServer.RunJobs();
-            Thread.Sleep(5000);
+            Thread.Sleep(10000);
 
             job = jobClient.GetJob(jobID);
             Assert.AreEqual(JobStatus.Completed, job.Status);
@@ -104,8 +110,8 @@ namespace Shift.UnitTest
         public void StopJobsRunningTest()
         {
             var jobTest = new TestJob();
-            var progress = new SynchronousProgress<ProgressInfo>(); 
-            var token = (new CancellationTokenSource()).Token; 
+            var progress = new SynchronousProgress<ProgressInfo>();
+            var token = (new CancellationTokenSource()).Token;
             var jobID = jobClient.Add(appID, () => jobTest.Start("Hello World", progress, token));
 
             //run job
@@ -132,8 +138,8 @@ namespace Shift.UnitTest
             //Test StopJobs with CleanUp() calls
 
             var jobTest = new TestJob();
-            var progress = new SynchronousProgress<ProgressInfo>(); 
-            var token = (new CancellationTokenSource()).Token; 
+            var progress = new SynchronousProgress<ProgressInfo>();
+            var token = (new CancellationTokenSource()).Token;
             var jobID = jobClient.Add(appID, () => jobTest.Start("Hello World", progress, token));
 
             //run job
@@ -145,7 +151,7 @@ namespace Shift.UnitTest
             Assert.AreEqual(JobStatus.Running, job.Status);
 
             jobClient.SetCommandStop(new List<string> { jobID });
-            jobServer.CleanUp(); 
+            jobServer.CleanUp();
             Thread.Sleep(3000);
 
             job = jobClient.GetJob(jobID);

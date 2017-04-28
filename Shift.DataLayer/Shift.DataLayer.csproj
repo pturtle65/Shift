@@ -123,8 +123,10 @@
     <Compile Include="JobDALRedis.cs" />
     <Compile Include="JobDALSql.cs" />
     <Compile Include="JobDALSQLite.cs" />
+    <Compile Include="SqlDBHelpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RedisHelpers.cs" />
+    <Compile Include="SQLiteDBHelpers.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
